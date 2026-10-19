@@ -75,8 +75,8 @@ executable haskell-llm
     main-is:          Main.hs
     other-modules:    Tokenise, InputTargetPairs, Embeddings, Tensors
     build-depends:    base >= 4.7
-                    , http-conduit
-                    , bytestring
+--                    , http-conduit
+--                     , bytestring
                     , containers
                     , split
                     , matrix
