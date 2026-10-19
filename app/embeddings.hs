@@ -17,11 +17,9 @@ import System.Random (mkStdGen, randomRs)
 -- limitations under the License.
 
 
--- import qualified Data.Vector as V
-
--- create initial embedding matrix for a given vocabulary size and output dimension 
--- with random values in a specified range
--- It's equivalent to PyTorch's torch.nn.Embedding
+-- Create initial embedding matrix for a given vocabulary size and output dimension 
+--- with random values in a specified range
+--- It's equivalent to PyTorch's torch.nn.Embedding
 embeddingInit:: Int -> Int -> Int -> (Double, Double) -> Matrix Double
 embeddingInit vocabSize outputDim seed range =      -- range is (minVal, maxVal)
     let gen = mkStdGen seed                     -- Create a random generator with the given seed
