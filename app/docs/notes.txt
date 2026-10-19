@@ -1,0 +1,33 @@
+Need to add Byte Pair Encoding
+# Byte Pair Encoding (BPE)
+
+## Overview
+Byte Pair Encoding is a data compression technique that iteratively replaces the most frequent pair of bytes in a sequence with a single unused byte.
+
+## Key Concepts
+- **Tokenization**: Converts text into subword tokens
+- **Iterative Merging**: Repeatedly merges the most common adjacent pair of tokens
+- **Vocabulary Building**: Creates a fixed-size vocabulary during training
+
+## Algorithm Steps
+1. Initialize with character-level tokens
+2. Find the most frequent pair of adjacent tokens
+3. Merge all occurrences of that pair
+4. Repeat for a fixed number of iterations or until vocabulary size is reached
+
+## Applications
+- Language models (GPT, BERT)
+- Machine translation
+- Natural language processing
+
+## Advantages
+- Reduces vocabulary size
+- Handles out-of-vocabulary words
+- Balances character and word-level tokenization
+
+## References
+- Page 33: How to build a large language model from scratch, Raschka
+
+
+USefile guide an source of input data:
+https://medium.com/@palanikalyan27/building-your-own-llm-from-scratch-a-comprehensive-guide-7e38d9624d47
