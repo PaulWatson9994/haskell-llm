@@ -1,5 +1,4 @@
-module Embeddings (embeddingInit, extractMatRows) where
-import Data.Matrix ( Matrix, fromList, fromLists, toLists) -- https://hackage.haskell.org/package/matrix-0.3.6.1/docs/Data-Matrix.html
+module Embeddings (initialVocabularyEmbeddings) where
 import System.Random (mkStdGen, randomRs)
 
 -- Copyright 2026 Newcastle University.
@@ -16,21 +15,27 @@ import System.Random (mkStdGen, randomRs)
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+type Embedding = [Double]
 
 -- Create initial embedding matrix for a given vocabulary size and output dimension 
 --- with random values in a specified range
---- It's equivalent to PyTorch's torch.nn.Embedding
-embeddingInit:: Int -> Int -> Int -> (Double, Double) -> Matrix Double
-embeddingInit vocabSize outputDim seed range =      -- range is (minVal, maxVal)
-    let gen = mkStdGen seed                     -- Create a random generator with the given seed
-        randomFloats = take (vocabSize * outputDim) (randomRs range gen :: [Double])
-    in fromList vocabSize outputDim randomFloats  -- create the matrix using the random values
+-- It's equivalent to PyTorch's torch.nn.Embedding
+-- embeddingInit:: Int -> Int -> Int -> (Double, Double) -> Matrix Double
+-- embeddingInit vocabSize outputDim seed range =       -- range is (minVal, maxVal)
+--     let gen = mkStdGen seed                          -- Create a random generator with the given seed
+--        randomFloats = take (vocabSize * outputDim) (randomRs range gen :: [Double])
+--     in fromList vocabSize outputDim randomFloats     -- create the matrix using the random values
 
--- extract rows from a Matrix given a list of indices
--- p43
-extractMatRows:: Matrix Double -> [Int] -> Matrix Double
-extractMatRows m indices = fromLists $ map (\i-> listMat !! i) indices
-                           where listMat = toLists m
 
-positionalEmbeddings :: Int -> Int -> Int -> (Double, Double) -> Matrix Double
-positionalEmbeddings maxLength outputDim seed range = extractMatRows (embeddingInit maxLength outputDim seed range) [0..(maxLength - 1)]
+initialVocabularyEmbeddings:: Int -> Int -> Int -> (Double, Double) -> [Embedding]
+-- Create a list of initial embeddings for a vocabulary
+-- vocabSize: number of tokens in the vocabulary
+-- embeddingDim: dimension of each embedding vector
+-- seed: random seed for reproducibility
+-- range: tuple specifying the range of random values (minVal, maxVal)
+-- returns: a list holding an embedding for each token in the vocabulary
+initialVocabularyEmbeddings vocabSize embeddingDim seed range = 
+    let gen = mkStdGen seed
+        randomFloats = take (vocabSize * embeddingDim) (randomRs range gen :: [Double])
+    in [ take embeddingDim (drop (i * embeddingDim) randomFloats) | i <- [0..(vocabSize-1)] ]
+
