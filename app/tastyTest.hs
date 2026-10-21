@@ -14,6 +14,8 @@ import Embeddings (initialVocabularyEmbeddings)
 
 import InputTargetPairs (generateInputTargetPairs)
 
+import PositionalEmbeddings (positionalEmbeddings)
+
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
@@ -110,6 +112,11 @@ unitTests = testGroup "Unit tests"
     -- p43
   , testCase "Basic Embeddings Initialisation Test: Cols" $
         length (head (initialVocabularyEmbeddings 6 3 42 (-0.1, 0.1))) @?= 3
+
+  , testCase "Basic Positional Embeddings Initialisation Test: Rows" $
+        length (positionalEmbeddings 10 4 100) @?= 10
+  , testCase "Basic Positional Embeddings Initialisation Test: Cols" $
+        length (head (positionalEmbeddings 10 4 100)) @?= 4
   ]
 
 fileTests :: TestTree

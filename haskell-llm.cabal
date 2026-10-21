@@ -95,7 +95,7 @@ executable haskell-llm
 executable tastyTest
     import:           warnings
     main-is:          tastyTest.hs
-    other-modules: Tokenise, InputTargetPairs, Embeddings, PositionalEmbeddings
+    other-modules:    Tokenise, InputTargetPairs, Embeddings, PositionalEmbeddings
 
     -- Other library packages from which modules are imported.
     build-depends:    base >= 4.7
