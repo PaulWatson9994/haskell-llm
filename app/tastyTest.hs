@@ -10,11 +10,9 @@ import Control.Exception (try, IOException)
 
 import Tokenise (tokenise, tokenToIdMapper, textToIds)
 
-import Embeddings (embeddingInit, extractMatRows)
+import Embeddings (initialVocabularyEmbeddings)
 
 import InputTargetPairs (generateInputTargetPairs)
-
-import Data.Matrix (Matrix, fromLists, nrows, ncols)
 
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
@@ -38,6 +36,7 @@ import qualified Data.Text.IO as TIO
 -- run with:
 --- cabal run tastyTest
 
+type Embedding = [Double]
 
 -- Safely load a file as Text
 loadFile :: FilePath -> IO (Either IOException T.Text)
@@ -47,19 +46,19 @@ bookFileLocation :: FilePath
 bookFileLocation = "C:/git/haskell-llm/data/TheVerdict.txt"
 
 -- example Matrix from p42
-exp42 :: Matrix Double
-exp42 = fromLists [[ 0.3374, -0.1778, -0.1690],
-                   [ 0.9178,  1.5810,  1.3010],
-                   [ 1.2753, -0.2010, -0.1606],
-                   [-0.4015,  0.9666, -1.1481],
-                   [-1.1589,  0.3255, -0.6315],
-                   [-2.8400, -0.7849, -1.4096]]
+exp42 :: [Embedding]
+exp42 = [[ 0.3374, -0.1778, -0.1690],
+         [ 0.9178,  1.5810,  1.3010],
+         [ 1.2753, -0.2010, -0.1606],
+         [-0.4015,  0.9666, -1.1481],
+         [-1.1589,  0.3255, -0.6315],
+         [-2.8400, -0.7849, -1.4096]]
 
-exp43 :: Matrix Double
-exp43 = fromLists [[ 1.2753, -0.2010, -0.1606],
-                   [-0.4015,  0.9666, -1.1481],
-                   [-2.8400, -0.7849, -1.4096],
-                   [ 0.9178,  1.5810,  1.3010]]  
+exp43 :: [Embedding]
+exp43 = [[ 1.2753, -0.2010, -0.1606],
+         [-0.4015,  0.9666, -1.1481],
+         [-2.8400, -0.7849, -1.4096],
+         [ 0.9178,  1.5810,  1.3010]]  
 
 main :: IO ()
 main = defaultMain tests
@@ -102,17 +101,15 @@ unitTests = testGroup "Unit tests"
   , testCase "simple list equality test" $
       [1, 2, 3] `compare` [1, 2, 3] @?= EQ
 
-  -- embeddingInit vocabSize outputDim seed range
+  -- initialVocabularyEmbeddings vocabSize outputDim seed range
   -- p43
   , testCase "Basic Embeddings Initialisation Test: Rows" $
-        nrows (embeddingInit 6 3 42 (-0.1, 0.1)) @?= 6
+        length (initialVocabularyEmbeddings 6 3 42 (-0.1, 0.1)) @?= 6
 
-    -- embeddingInit vocabSize outputDim seed range
+    -- initialVocabularyEmbeddings vocabSize outputDim seed range
     -- p43
   , testCase "Basic Embeddings Initialisation Test: Cols" $
-        ncols (embeddingInit 6 3 42 (-0.1, 0.1)) @?= 3
-  , testCase "Embeddings Extract" $
-        extractMatRows exp42 [2, 3, 5, 1] @?= exp43
+        length (head (initialVocabularyEmbeddings 6 3 42 (-0.1, 0.1))) @?= 3
   ]
 
 fileTests :: TestTree

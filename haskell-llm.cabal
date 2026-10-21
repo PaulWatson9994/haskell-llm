@@ -73,7 +73,7 @@ common warnings
 executable haskell-llm
     import:           warnings
     main-is:          Main.hs
-    other-modules:    Tokenise, InputTargetPairs, Embeddings
+    other-modules:    Tokenise, InputTargetPairs, Embeddings, PositionalEmbeddings
     build-depends:    base >= 4.7
 --                    , http-conduit
 --                     , bytestring
@@ -95,7 +95,7 @@ executable haskell-llm
 executable tastyTest
     import:           warnings
     main-is:          tastyTest.hs
-    other-modules: Tokenise, InputTargetPairs, Embeddings
+    other-modules: Tokenise, InputTargetPairs, Embeddings, PositionalEmbeddings
 
     -- Other library packages from which modules are imported.
     build-depends:    base >= 4.7
