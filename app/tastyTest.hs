@@ -1,6 +1,6 @@
 import Test.Tasty
     ( defaultMain, withResource, testGroup, TestTree )
-import Test.Tasty.HUnit ( testCase, (@?=), assertFailure )
+import Test.Tasty.HUnit ( testCase, (@?=), assertFailure, Assertion, assertBool )
 import Test.Tasty.SmallCheck as SC ( testProperty )
 import Test.Tasty.QuickCheck as QC ( testProperty )
 
@@ -16,9 +16,12 @@ import InputTargetPairs (generateInputTargetPairs)
 
 import PositionalEmbeddings (positionalEmbeddings)
 
+import ContextVector (contextVector)
+
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
+type Embedding = [Double]
 
 -- Copyright 2026 Newcastle University.
 --
@@ -37,8 +40,6 @@ import qualified Data.Text.IO as TIO
 -- https://hackage.haskell.org/package/tasty
 -- run with:
 --- cabal run tastyTest
-
-type Embedding = [Double]
 
 -- Safely load a file as Text
 loadFile :: FilePath -> IO (Either IOException T.Text)
@@ -61,6 +62,18 @@ exp43 = [[ 1.2753, -0.2010, -0.1606],
          [-0.4015,  0.9666, -1.1481],
          [-2.8400, -0.7849, -1.4096],
          [ 0.9178,  1.5810,  1.3010]]  
+
+contextTestEmbeddingsP57 :: [Embedding]
+contextTestEmbeddingsP57 =  -- [RASCHKA26, p57]
+    [[0.43, 0.15, 0.89], -- Your     (x^1)
+     [0.55, 0.87, 0.66], -- journey  (x^2)
+     [0.57, 0.85, 0.64], -- starts   (x^3)
+     [0.22, 0.58, 0.33], -- with     (x^4)
+     [0.77, 0.25, 0.10], -- one      (x^5)
+     [0.05, 0.80, 0.55]] -- step     (x^6)
+
+contextVectorP57 :: Embedding -- [RASCHKA26, p57]
+contextVectorP57 = [0.4419, 0.6515, 0.5683]
 
 main :: IO ()
 main = defaultMain tests
@@ -115,8 +128,12 @@ unitTests = testGroup "Unit tests"
 
   , testCase "Basic Positional Embeddings Initialisation Test: Rows" $
         length (positionalEmbeddings 10 4 100) @?= 10
+
   , testCase "Basic Positional Embeddings Initialisation Test: Cols" $
         length (head (positionalEmbeddings 10 4 100)) @?= 4
+
+  , testCase "Basic Context Vector Test" $
+        assertApproxEqualEmbedding 1e-1 (contextVector contextTestEmbeddingsP57 2) contextVectorP57
   ]
 
 fileTests :: TestTree
@@ -145,3 +162,11 @@ mkFileTests getFileContent =
 inputPairs :: String -> [([Int], Int)]
 inputPairs content = let tokenMapper = tokenToIdMapper (tokenise content) in 
    generateInputTargetPairs 5 (take 500 (textToIds content tokenMapper))
+
+assertApproxEqualEmbedding:: Double -> Embedding -> Embedding -> Assertion
+assertApproxEqualEmbedding tolerance expected actual =
+    assertBool
+        ("Expected " ++ show expected ++
+         ", but got " ++ show actual ++
+         " (tolerance " ++ show tolerance ++ ")")
+        (all (\(expt, act) -> abs (expt - act) <= tolerance) (zip expected actual))
