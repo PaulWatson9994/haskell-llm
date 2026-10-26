@@ -1,10 +1,6 @@
 import Test.Tasty
     ( defaultMain, withResource, testGroup, TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=), assertFailure, Assertion, assertBool )
-import Test.Tasty.SmallCheck as SC ( testProperty )
-import Test.Tasty.QuickCheck as QC ( testProperty )
-
-import Data.List (sort)
 
 import Control.Exception (try, IOException)
 
@@ -16,7 +12,7 @@ import InputTargetPairs (generateInputTargetPairs)
 
 import PositionalEmbeddings (positionalEmbeddings)
 
-import ContextVector (contextVector)
+import ContextVector (contextVector, attentionWeights, allContextVectors)
 
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
@@ -75,50 +71,28 @@ contextTestEmbeddingsP57 =  -- [RASCHKA26, p57]
 contextVectorP57 :: Embedding -- [RASCHKA26, p57]
 contextVectorP57 = [0.4419, 0.6515, 0.5683]
 
+contextVectorsP63 :: [Embedding] -- [RASCHKA26, p63]
+contextVectorsP63 = 
+       [[0.4421, 0.5931, 0.5790],
+        [0.4419, 0.6515, 0.5683],
+        [0.4431, 0.6496, 0.5671],
+        [0.4304, 0.6298, 0.5510],
+        [0.4671, 0.5910, 0.5266],
+        [0.4177, 0.6503, 0.5645]]
+
 main :: IO ()
 main = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Tests" [properties, unitTests, fileTests]
+tests = testGroup "Tests" [unitTests, fileTests]
 
-properties :: TestTree
-properties = testGroup "Properties" [scProps, qcProps]
-
-scProps :: TestTree
-scProps = testGroup "(checked by SmallCheck)"
-  [ SC.testProperty "sort == sort . reverse" $
-      \list -> sort (list :: [Int]) == sort (reverse list)
-  , SC.testProperty "Fermat's little theorem" $
-      \x -> ((x :: Integer)^7 - x) `mod` 7 == 0
-  -- the following property does not hold
- -- , SC.testProperty "Fermat's last theorem" $
- --     \x y z n ->
- --       (n :: Integer) > 2 SC.==> x^n + y^n /= (z^n :: Integer)
-  ]
-
-qcProps :: TestTree
-qcProps = testGroup "(checked by QuickCheck)"
-  [ QC.testProperty "sort == sort . reverse" $
-      \list -> sort (list :: [Int]) == sort (reverse list)
-  , QC.testProperty "Fermat's little theorem" $
-      \x -> ((x :: Integer)^7 - x) `mod` 7 == 0
-  ]
 
 unitTests :: TestTree
 unitTests = testGroup "Unit tests"
-  [ testCase "List comparison (different length)" $
-      [1, 2, 3] `compare` [1, 2] @?= GT     -- N.B. in hunit, @?= is an assertion that the left-hand side equals the right side. If they are not equal, the test fails.
-
-  -- the following test does not hold
-  , testCase "List comparison (same length)" $
-      [1, 2, 3] `compare` [1, 2, 2] @?= GT
-
-  , testCase "simple list equality test" $
-      [1, 2, 3] `compare` [1, 2, 3] @?= EQ
-
+  [ 
   -- initialVocabularyEmbeddings vocabSize outputDim seed range
   -- p43
-  , testCase "Basic Embeddings Initialisation Test: Rows" $
+    testCase "Basic Embeddings Initialisation Test: Rows" $
         length (initialVocabularyEmbeddings 6 3 42 (-0.1, 0.1)) @?= 6
 
     -- initialVocabularyEmbeddings vocabSize outputDim seed range
@@ -132,8 +106,19 @@ unitTests = testGroup "Unit tests"
   , testCase "Basic Positional Embeddings Initialisation Test: Cols" $
         length (head (positionalEmbeddings 10 4 100)) @?= 4
 
+  , testCase "Basic Attention Score Test" $
+        length (attentionWeights contextTestEmbeddingsP57 2) @?= 6
+
+  , testCase "Attention Scores Normalisation Test" $
+        assertBool "Attention scores sum to 1" $
+            abs (sum (attentionWeights contextTestEmbeddingsP57 2) - 1) <= 1e-6
+
   , testCase "Basic Context Vector Test" $
         assertApproxEqualEmbedding 1e-1 (contextVector contextTestEmbeddingsP57 2) contextVectorP57
+
+  , testCase "All Context Vectors Test" $
+        assertBool "All context vectors approximately equal" $
+            all (uncurry (approxEqualLists 1e-1)) (zip (allContextVectors contextTestEmbeddingsP57) contextVectorsP63)
   ]
 
 fileTests :: TestTree
@@ -170,3 +155,6 @@ assertApproxEqualEmbedding tolerance expected actual =
          ", but got " ++ show actual ++
          " (tolerance " ++ show tolerance ++ ")")
         (all (\(expt, act) -> abs (expt - act) <= tolerance) (zip expected actual))
+
+approxEqualLists :: Double -> [Double] -> [Double] -> Bool
+approxEqualLists tolerance expected actual = all (\(expt, act) -> abs (expt - act) <= tolerance) (zip expected actual)

@@ -1,4 +1,4 @@
-module ContextVector(contextVector) where
+module ContextVector(contextVector, attentionWeights, allAttentionWeights, allContextVectors) where
 import Data.List (foldl', foldl1)
 
 type Embedding = [Double]
@@ -24,16 +24,31 @@ contextVector:: [Embedding] -> Int -> Embedding
 -- result: the context vector for the embedding at the given index
 contextVector embeddings index = 
     sumEmbeddings weightedEmbeddings
-    where weights = attentionWeights embeddings index
-          weightedEmbeddings = zipWith embeddingTimesWeight embeddings weights
+    where scores = attentionWeights embeddings index
+          weightedEmbeddings = zipWith embeddingTimesWeight embeddings scores
 
-attentionWeights :: [Embedding] -> Int -> [Double]
--- Compute the attention weights for the embedding at the given index against all embeddings in a sequence
--- softMax is used to normalise the weights
+allAttentionWeights :: [Embedding] -> [[Double]]
+-- Compute the attention weights for all tokens in the sequence
+-- embeddings: list of all embeddings in a sequence
+-- result: list of attention weights for all tokens against all embeddings
+allAttentionWeights embeddings = map (attentionWeights embeddings) [0..length embeddings - 1]
+
+allContextVectors:: [Embedding] -> [Embedding]
+allContextVectors embeddings = map (contextVector embeddings) [0..length embeddings - 1]
+
+attentionScores :: [Embedding] -> Int -> [Double]
+-- Compute the attention scores for the embedding at the given index against all embeddings in a sequence
 -- embeddings: list of all embeddings in a sequence
 -- index: the index of the embedding to compute attention weights for
--- result: list of normalised attention weights for the embedding at the given index against all embeddings
-attentionWeights embeddings index = softMax $ map (\e -> dotProduct (embeddings !! index) e) embeddings
+-- result: list of attention scores for the embedding at the given index against all embeddings
+attentionScores embeddings index = map (\e -> dotProduct (embeddings !! index) e) embeddings
+
+attentionWeights :: [Embedding] -> Int -> [Double]
+-- Compute the attention weights (normalized attention scores) for the embedding at the given index against all embeddings in a sequence
+-- embeddings: list of numbers to normalise
+-- index: the index of the embedding to compute attention weights for
+-- result: attention weights for the embedding at the given index against all embeddings
+attentionWeights embeddings index = softMax $ attentionScores embeddings index
 
 dotProduct :: Embedding -> Embedding -> Double
 dotProduct v1 v2 = sum $ zipWith (*) v1 v2
